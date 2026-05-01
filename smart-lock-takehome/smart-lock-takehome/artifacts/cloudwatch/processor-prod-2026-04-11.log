@@ -1,0 +1,8 @@
+{"timestamp":"2026-04-11T21:14:03.010Z","level":"INFO","unitId":"7720fc98-1257-4a2e-9abb-55dc3dd5a54b","message":"Processing lock event: lock","extra":{"topic":"v/acme/7720fc98-1257-4a2e-9abb-55dc3dd5a54b/lock/forced_open"}}
+{"timestamp":"2026-04-11T21:14:03.032Z","level":"INFO","unitId":"7720fc98-1257-4a2e-9abb-55dc3dd5a54b","message":"Lock state: forced_open -> forced_open","extra":{"notify":true,"severity":"alert"}}
+{"timestamp":"2026-04-11T21:14:03.034Z","level":"INFO","unitId":"7720fc98-1257-4a2e-9abb-55dc3dd5a54b","message":"Notification sent: door_forced_open_alert","extra":{"topic":"v/7720fc98-1257-4a2e-9abb-55dc3dd5a54b/message/default/send"}}
+{"timestamp":"2026-04-11T21:14:03.035Z","level":"INFO","unitId":"7720fc98-1257-4a2e-9abb-55dc3dd5a54b","message":"Lock event processed successfully","extra":{"state":"forced_open","notify":true}}
+{"timestamp":"2026-04-11T21:18:51.410Z","level":"INFO","unitId":"11111111-2222-3333-4444-555555555555","message":"Processing lock event: lock","extra":{"topic":"v/acme/11111111-2222-3333-4444-555555555555/lock/jammed"}}
+{"timestamp":"2026-04-11T21:18:51.429Z","level":"INFO","unitId":"11111111-2222-3333-4444-555555555555","message":"Lock state: jammed -> jammed","extra":{"notify":true,"severity":"warn"}}
+{"timestamp":"2026-04-11T21:18:51.431Z","level":"INFO","unitId":"11111111-2222-3333-4444-555555555555","message":"Notification sent: lock_jammed_notify","extra":{"topic":"v/11111111-2222-3333-4444-555555555555/message/default/send"}}
+{"timestamp":"2026-04-11T21:18:51.431Z","level":"INFO","unitId":"11111111-2222-3333-4444-555555555555","message":"Lock event processed successfully","extra":{"state":"jammed","notify":true}}

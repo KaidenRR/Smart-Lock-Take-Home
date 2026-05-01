@@ -1,0 +1,4 @@
+{"timestamp":"2026-04-14T16:02:01.931Z","level":"INFO","unitId":"unknown","message":"metric","extra":{"metric":"lock_event","tenant":"acme","event_type":"lock","outcome":"processed","duration_ms":84}}
+{"timestamp":"2026-04-14T16:02:02.277Z","level":"INFO","unitId":"unknown","message":"metric","extra":{"metric":"lock_event","tenant":"unknown","event_type":"lock","outcome":"processed","duration_ms":81}}
+{"timestamp":"2026-04-14T16:02:07.041Z","level":"INFO","unitId":"unknown","message":"metric","extra":{"metric":"lock_event","tenant":"beacon","event_type":"lock","outcome":"duplicate","duration_ms":3}}
+{"timestamp":"2026-04-14T16:02:08.211Z","level":"INFO","unitId":"unknown","message":"metric","extra":{"metric":"lock_event","tenant":"unknown","event_type":"lock","outcome":"processed","duration_ms":77}}

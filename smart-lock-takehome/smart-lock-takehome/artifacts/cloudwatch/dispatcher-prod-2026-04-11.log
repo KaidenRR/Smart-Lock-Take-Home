@@ -1,0 +1,4 @@
+2026-04-11T21:18:51.612Z INFO dispatcher received publish topic=v/11111111-2222-3333-4444-555555555555/message/default/send template=lock_jammed_notify recipient_count=1 first_recipient=Building Manager
+2026-04-11T21:18:51.820Z INFO dispatcher delivered template=lock_jammed_notify unitId=11111111-2222-3333-4444-555555555555 transports=email
+2026-04-11T22:03:14.141Z INFO dispatcher received publish topic=v/7720fc98-1257-4a2e-9abb-55dc3dd5a54b/message/default/send template=lock_jammed_notify recipient_count=2 first_recipient=Jane Doe
+2026-04-11T22:03:14.392Z INFO dispatcher delivered template=lock_jammed_notify unitId=7720fc98-1257-4a2e-9abb-55dc3dd5a54b transports=email,sms

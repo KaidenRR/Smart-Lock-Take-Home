@@ -1,0 +1,22 @@
+{
+  "id": "11111111-2222-3333-4444-555555555555",
+  "name": "Corporate Suite 4B",
+  "status": "ACTIVE",
+  "tenant_id": "acme",
+  "notifications": {
+    "enabled": false,
+    "channel": "default"
+  },
+  "residents": [
+    {
+      "name": "Building Manager",
+      "email": "manager@example.com",
+      "phone": "+15555550200",
+      "preferences": {
+        "email": true,
+        "sms": false,
+        "push": false
+      }
+    }
+  ]
+}

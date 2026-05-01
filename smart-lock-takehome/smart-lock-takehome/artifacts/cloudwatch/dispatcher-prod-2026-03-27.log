@@ -1,0 +1,2 @@
+2026-03-27T23:11:42.181Z INFO dispatcher received publish topic=v/7720fc98-1257-4a2e-9abb-55dc3dd5a54b/message/default/send template=lock_jammed_notify recipient_count=2
+2026-03-27T23:11:42.440Z INFO dispatcher delivered template=lock_jammed_notify unitId=7720fc98-1257-4a2e-9abb-55dc3dd5a54b transports=email,sms

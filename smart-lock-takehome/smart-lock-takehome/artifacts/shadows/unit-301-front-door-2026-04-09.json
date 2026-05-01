@@ -1,0 +1,16 @@
+{
+  "state": {
+    "reported": {
+      "state": "locked",
+      "raw_state": "unlocked",
+      "event_type": "lock",
+      "battery_pct": 87,
+      "parent_device_name": "Front Door Lock",
+      "attributes": {
+        "friendly_name": "Front Door Lock",
+        "entity_id": "lock.front_door"
+      },
+      "last_updated": "2026-04-09T15:05:04.443Z"
+    }
+  }
+}

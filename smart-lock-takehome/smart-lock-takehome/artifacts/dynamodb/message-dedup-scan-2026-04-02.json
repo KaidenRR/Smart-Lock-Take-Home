@@ -1,0 +1,22 @@
+{
+  "TableName": "MessageDeduplication-production",
+  "Count": 3,
+  "ScannedCount": 3,
+  "Items": [
+    {
+      "messageHash": "0abeb5746ca7f0a407864b67b9dba9c62e64cb0c126dff77d094c7fded737726",
+      "ttl": 1779994274,
+      "processedAt": "2026-04-02T12:11:14.201Z"
+    },
+    {
+      "messageHash": "2ad111e5d9f155786f855fc3db2c1f2508794f52050f9d24e2d4718b2b0d2376",
+      "ttl": 1779994291,
+      "processedAt": "2026-04-02T12:11:31.844Z"
+    },
+    {
+      "messageHash": "5ef0b97e0a54b40990b18d2fe7f03d8ff2be6a9fca96775f2a6fbe2e380d7a5d",
+      "ttl": 1779994317,
+      "processedAt": "2026-04-02T12:11:57.392Z"
+    }
+  ]
+}

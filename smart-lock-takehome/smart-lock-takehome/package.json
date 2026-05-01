@@ -1,0 +1,14 @@
+{
+  "name": "smart-lock-processor",
+  "version": "0.7.4",
+  "description": "Lambda function that processes MQTT messages from smart locks",
+  "main": "src/handler.js",
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.525.0",
+    "@aws-sdk/client-iot-data-plane": "^3.525.0",
+    "@aws-sdk/lib-dynamodb": "^3.525.0"
+  }
+}

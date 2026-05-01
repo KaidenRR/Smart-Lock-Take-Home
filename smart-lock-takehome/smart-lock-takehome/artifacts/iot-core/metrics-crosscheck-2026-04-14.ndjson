@@ -1,0 +1,4 @@
+{"timestamp":"2026-04-14T16:02:01.900Z","topic":"v/acme/7720fc98-1257-4a2e-9abb-55dc3dd5a54b/lock/jammed","event_id":"evt_01JQPWJZC1QFK0A9HXFDE0F4A3","state":"jammed"}
+{"timestamp":"2026-04-14T16:02:02.244Z","topic":"v/acme/7720fc98-1257-4a2e-9abb-55dc3dd5a54b/lock/forced_open","event_id":"evt_01JQPWK9EJY7M6S66J2G3FQWZB","state":"forced_open"}
+{"timestamp":"2026-04-14T16:02:07.008Z","topic":"v/beacon/7720fc98-aaaa-bbbb-cccc-dddddddddddd/lock/state_change","event_id":"evt_01JQPWQ17G0V8GJH8PZR3TAR4Q","state":"locked"}
+{"timestamp":"2026-04-14T16:02:08.177Z","topic":"v/beacon/7720fc98-aaaa-bbbb-cccc-dddddddddddd/lock/tamper","event_id":"evt_01JQPWQBY4C0YFJ6V5RD4VVH7P","state":"tamper"}
