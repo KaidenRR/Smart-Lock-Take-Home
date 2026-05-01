@@ -13,7 +13,7 @@ const CACHE_TTL_MS = 60_000;
 const unitCache = new Map();
 
 const cacheGet = (unitId) => {
-  const key = unitId.substring(0, 8);
+  const key = unitId;
   const entry = unitCache.get(key);
   if (!entry) return null;
   if (Date.now() - entry.cachedAt > CACHE_TTL_MS) {
@@ -24,7 +24,7 @@ const cacheGet = (unitId) => {
 };
 
 const cacheSet = (unitId, unit) => {
-  const key = unitId.substring(0, 8);
+  const key = unitId;
   unitCache.set(key, { unit, cachedAt: Date.now() });
 };
 

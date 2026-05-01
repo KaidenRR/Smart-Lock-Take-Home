@@ -20,6 +20,7 @@ const generateMessageHash = (topic, payload) => {
     topic,
     state: payload.state,
     sensor_id: payload.sensor_id,
+    event_id: payload.event_id,
   });
   return crypto.createHash("sha256").update(stable).digest("hex");
 };

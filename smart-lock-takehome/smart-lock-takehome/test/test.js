@@ -330,6 +330,27 @@ const runTests = async () => {
     assert(false, "Tenant dimension stability", error.message);
   }
 
+    console.log("\nScenario 8: distinct jam events with unique event_ids are not collapsed");
+    reset();
+    try {
+        const base = {
+            topic: `v/${TENANT}/${UNIT}/lock/jammed`,
+            state: "jammed",
+            sensor_id: "front_door_lock",
+        };
+
+        const result1 = await handler(makeEvent({ ...base, event_id: "evt_01JP3J3Y2R5STCF8T1J0A5JRM1" }));
+        const result2 = await handler(makeEvent({ ...base, event_id: "evt_01JP3J4Z3YZV4QG91G7FB6YCMM" }));
+        const result3 = await handler(makeEvent({ ...base, event_id: "evt_01JP3J6E65A9NQPZ0EZXWMS6H4" }));
+
+        assert(result1.body === "OK", "First jam event is processed", `Got ${result1.body}`);
+        assert(result2.body === "OK", "Second jam event is processed, not collapsed", `Got ${result2.body}`);
+        assert(result3.body === "OK", "Third jam event is processed, not collapsed", `Got ${result3.body}`);
+        assert(publishedMessages.length === 3, "Three notifications published", `Got ${publishedMessages.length}`);
+    } catch (error) {
+        assert(false, "Distinct jam dedup", error.message);
+    }
+
   console.log(`\n=== Results: ${passed} passed, ${failed} failed ===\n`);
 
   if (failed > 0) {

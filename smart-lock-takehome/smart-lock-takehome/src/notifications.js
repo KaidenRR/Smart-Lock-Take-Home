@@ -62,7 +62,7 @@ const sendNotification = async (unit, template, parameters) => {
       preferences: resident.preferences,
     }));
 
-  iotClient.send(
+  await iotClient.send(
     new PublishCommand({
       topic,
       payload: JSON.stringify({
