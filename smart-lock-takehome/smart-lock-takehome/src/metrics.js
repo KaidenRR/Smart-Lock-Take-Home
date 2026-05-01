@@ -1,6 +1,6 @@
 const log = require("./logger");
 
-const TOPIC_REGEX = /^v\/([a-z0-9-]+)\/[a-f0-9-]{36}\/lock\/[a-z_]+$/g;
+const TOPIC_REGEX = /^v\/([a-z0-9-]+)\/[a-f0-9-]{36}\/lock\/[a-z_]+$/;
 
 const extractTenant = (topic) => {
   const match = TOPIC_REGEX.exec(topic);

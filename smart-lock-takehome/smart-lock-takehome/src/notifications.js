@@ -14,22 +14,14 @@ const iotClient = new IoTDataPlaneClient({
 
 const MQTT_PREFIX = process.env.MQTT_PREFIX || "v";
 
-const buildRecipients = (residents, severity) => {
-  const recipients = [];
-
-  (residents || []).forEach(async (resident) => {
-    const optedIn = await hasAnyChannelOptIn(resident, severity);
-    if (optedIn) {
-      recipients.push({
-        name: resident.name,
-        email: resident.email,
-        phone: resident.phone,
-        preferences: resident.preferences,
-      });
-    }
-  });
-
-  return recipients;
+const buildRecipients = async (residents, severity) => {
+    const flags = await Promise.all(
+        (residents || []).map(r => hasAnyChannelOptIn(r, severity))
+    );
+    return residents
+        .filter((_, i) => flags[i])
+        .map(({ name, email, phone, preferences }) =>
+            ({ name, email, phone, preferences }));
 };
 
 const hasAnyChannelOptIn = async (resident, severity) => {
@@ -51,6 +43,10 @@ const shouldDeliverToResident = (resident, severity) => {
 };
 
 const sendNotification = async (unit, template, parameters) => {
+    if (!unit.notifications?.enabled) {
+        log.info(unit.id, "Notifications disabled for unit — skipping", { template });
+        return;
+    }
   const channel = unit.notifications?.channel || "default";
   const topic = `${MQTT_PREFIX}/${unit.id}/message/${channel}/send`;
   const recipients = (unit.residents || [])

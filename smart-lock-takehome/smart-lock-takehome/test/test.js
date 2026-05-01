@@ -351,6 +351,26 @@ const runTests = async () => {
         assert(false, "Distinct jam dedup", error.message);
     }
 
+    console.log("\nScenario 9: notifications are suppressed when the unit has notifications.enabled = false");
+    reset();
+    try {
+        const CORP_UNIT = "11111111-2222-3333-4444-555555555555";
+        const result = await handler(makeEvent({
+            topic: `v/acme/${CORP_UNIT}/lock/jammed`,
+            state: "jammed",
+            sensor_id: "front_door_lock",
+            event_id: `evt_disabled_unit_${Date.now()}`,
+        }));
+        assert(result.statusCode === 200,
+            "Handler returns 200 for disabled-notification unit",
+            `Got ${result.statusCode} ${result.body}`);
+        assert(publishedMessages.length === 0,
+            "No notification is published when unit.notifications.enabled is false",
+            `Got ${publishedMessages.length} publish(es): ${JSON.stringify(publishedMessages.map(m => m.topic))}`);
+    } catch (error) {
+        assert(false, "Notification suppression for disabled unit", error.message);
+    }
+
   console.log(`\n=== Results: ${passed} passed, ${failed} failed ===\n`);
 
   if (failed > 0) {
