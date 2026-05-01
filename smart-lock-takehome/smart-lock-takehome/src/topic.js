@@ -3,7 +3,7 @@ const parseTopic = (topic) => {
   return {
     tenantId: parts[1],
     unitId: parts[2],
-    eventType: parts[3],
+    eventType: parts[4],
   };
 };
 

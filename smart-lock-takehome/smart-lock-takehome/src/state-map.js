@@ -2,7 +2,7 @@ const stateMap = {
   locked:           { state: "locked",            notify: false, template: null,                     severity: "info"  },
   auto_locked:      { state: "locked",            notify: false, template: null,                     severity: "info"  },
   manually_locked:  { state: "locked",            notify: false, template: null,                     severity: "info"  },
-  unlocked:         { state: "locked",            notify: false, template: null,                     severity: "info"  },
+  unlocked:         { state: "unlocked",          notify: false, template: null,                     severity: "info"  },
   keypad_unlocked:  { state: "unlocked",          notify: false, template: null,                     severity: "info"  },
   remote_unlocked:  { state: "unlocked",          notify: false, template: null,                     severity: "info"  },
   jammed:           { state: "jammed",            notify: true,  template: "lock_jammed_notify",     severity: "warn"  },
@@ -14,7 +14,7 @@ const stateMap = {
 };
 
 const mapLockState = (rawState, eventType) => {
-  return stateMap[rawState] || { state: rawState, notify: false, template: null, severity: "info" };
+  return stateMap[rawState] || { state: eventType, notify: false, template: null, severity: "info" };
 };
 
 module.exports = { mapLockState, stateMap };
