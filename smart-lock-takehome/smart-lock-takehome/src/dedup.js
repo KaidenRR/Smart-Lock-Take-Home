@@ -43,7 +43,7 @@ const isDuplicate = async (topic, payload) => {
       TableName: DEDUP_TABLE,
       Item: {
         messageHash: hash,
-        ttl: ttlSeconds,
+        expiresAt: ttlSeconds,
         processedAt: new Date().toISOString(),
       },
     })
