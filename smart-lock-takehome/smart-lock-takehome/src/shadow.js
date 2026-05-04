@@ -22,14 +22,28 @@ const getShadow = async (unitId, shadowName) => {
 };
 
 const updateShadow = async (unitId, shadowName, newState) => {
-  const current = await getShadow(unitId, shadowName);
-  const currentReported = current.state?.reported || {};
+    const current = await getShadow(unitId, shadowName);
+    const currentReported = current.state?.reported || {};
 
-  const merged = {
-    ...currentReported,
-    ...newState,
-    last_updated: new Date().toISOString(),
-  };
+    // For telemetry fields that can arrive out of order, only advance forward.
+    const incomingEventTime = newState.event_timestamp
+        ? new Date(newState.event_timestamp).getTime()
+        : null;
+    const storedEventTime = currentReported.event_timestamp
+        ? new Date(currentReported.event_timestamp).getTime()
+        : null;
+
+    if (incomingEventTime && storedEventTime && incomingEventTime < storedEventTime) {
+        // Stale event — merge non-telemetry fields only, drop battery_pct
+        const { battery_pct, ...safeFields } = newState;
+        newState = safeFields;
+    }
+
+    const merged = {
+        ...currentReported,
+        ...newState,
+        last_updated: new Date().toISOString(),
+    };
 
   await iotClient.send(
     new UpdateThingShadowCommand({

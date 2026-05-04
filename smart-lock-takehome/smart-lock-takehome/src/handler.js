@@ -47,6 +47,7 @@ exports.handler = async (event) => {
       raw_state: rawState,
       event_type: eventType,
       battery_pct: event.battery_pct,
+      event_timestamp: event.eventTimestamp,
       parent_device_name: event.device_name || "Front Door Lock",
       attributes: {
         friendly_name: event.device_name || "Front Door Lock",

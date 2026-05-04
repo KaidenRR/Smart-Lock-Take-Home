@@ -407,6 +407,74 @@ const runTests = async () => {
         assert(false, "INC-2405 metric dimensions", error.message);
     }
 
+    console.log("\nScenario 11 (INC-2406): stale battery telemetry does not overwrite a fresher reading");
+    reset();
+    try {
+        // Reproduces the exact sequence captured in the rollout artifacts:
+        //   Event A arrives at 18:22:11.014 with eventTimestamp 18:22:11 → battery_pct 42
+        //   Event B arrives at 18:22:11.066 with eventTimestamp 18:22:07 → battery_pct 41  (older!)
+        // Without the fix, B wins because it is the last writer; battery_pct reverts to 41.
+        // With the fix, shadow.js compares eventTimestamp before merging battery_pct,
+        // and drops the stale field while still writing non-telemetry fields from Event B.
+
+        const BASE = {
+            topic: `v/${TENANT}/${UNIT}/lock/state_change`,
+            sensor_id: "front_door_lock",
+            state: "locked",
+        };
+
+        // Event A — newer device timestamp, arrives first
+        const eventA = makeEvent({
+            ...BASE,
+            event_id: "evt_inc2406_A",
+            battery_pct: 42,
+            eventTimestamp: "2026-04-08T18:22:11.000Z",
+        });
+
+        // Event B — older device timestamp (4 s earlier), arrives 52 ms later
+        const eventB = makeEvent({
+            ...BASE,
+            event_id: "evt_inc2406_B",
+            battery_pct: 41,
+            eventTimestamp: "2026-04-08T18:22:07.000Z",
+        });
+
+        const resultA = await handler(eventA);
+        assert(resultA.statusCode === 200,
+            "Event A (battery 42, t=11s) is processed OK",
+            `Got ${resultA.statusCode}`);
+
+        const shadowAfterA = shadows[`${UNIT}:front_door_lock`];
+        assert(
+            shadowAfterA?.state?.reported?.battery_pct === 42,
+            "Shadow reflects battery_pct 42 after Event A",
+            `Got ${shadowAfterA?.state?.reported?.battery_pct}`
+        );
+
+        const resultB = await handler(eventB);
+        assert(resultB.statusCode === 200,
+            "Event B (battery 41, t=07s) is accepted without error",
+            `Got ${resultB.statusCode}`);
+
+        const shadowAfterB = shadows[`${UNIT}:front_door_lock`];
+        assert(
+            shadowAfterB?.state?.reported?.battery_pct === 42,
+            "Shadow battery_pct remains 42 — stale Event B must not overwrite fresher value",
+            `Got ${shadowAfterB?.state?.reported?.battery_pct} (regressed to stale value)`
+        );
+
+        // Non-telemetry fields from Event B (state, event_type, last_updated, etc.)
+        // must still be written — the fix should only suppress battery_pct, not the
+        // entire shadow update.
+        assert(
+            shadowAfterB?.state?.reported?.state === "locked",
+            "Non-telemetry fields from Event B are still merged into shadow",
+            `Got '${shadowAfterB?.state?.reported?.state}'`
+        );
+    } catch (error) {
+        assert(false, "INC-2406 stale battery telemetry", error.message);
+    }
+
   console.log(`\n=== Results: ${passed} passed, ${failed} failed ===\n`);
 
   if (failed > 0) {
