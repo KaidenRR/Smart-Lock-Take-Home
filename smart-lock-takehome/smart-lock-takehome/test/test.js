@@ -371,6 +371,42 @@ const runTests = async () => {
         assert(false, "Notification suppression for disabled unit", error.message);
     }
 
+    console.log("\nScenario 10 (INC-2405): extractTenant resolves correctly for UUID and non-UUID unit IDs");
+    reset();
+    try {
+        const { extractTenant } = require(path.resolve(__dirname, "..", "src", "metrics.js"));
+
+        // Part A: UUID unit ID — the happy path that was already working
+        const uuidTopic = `v/acme/7720fc98-1257-4a2e-9abb-55dc3dd5a54b/lock/jammed`;
+        assert(
+            extractTenant(uuidTopic) === "acme",
+            "UUID unit ID: tenant resolves to 'acme'",
+            `Got '${extractTenant(uuidTopic)}'`
+        );
+
+        // Part B: non-UUID unit ID — the pattern seen in the EMF sample that produced "unknown"
+        const shortIdTopic = `v/acme/unit-301/lock/forced_open`;
+        assert(
+            extractTenant(shortIdTopic) === "acme",
+            "Non-UUID unit ID: tenant still resolves to 'acme', not 'unknown'",
+            `Got '${extractTenant(shortIdTopic)}'`
+        );
+
+        // Part C: parseTopic returns the subtype (parts[4]), not the category segment (parts[3])
+        const { parseTopic } = require(path.resolve(__dirname, "..", "src", "topic.js"));
+        const subtypes = ["jammed", "forced_open", "tamper", "battery_low", "state_change"];
+        for (const subtype of subtypes) {
+            const { eventType } = parseTopic(`v/acme/${UNIT}/lock/${subtype}`);
+            assert(
+                eventType === subtype,
+                `parseTopic eventType is '${subtype}', not the category segment 'lock'`,
+                `Got '${eventType}'`
+            );
+        }
+    } catch (error) {
+        assert(false, "INC-2405 metric dimensions", error.message);
+    }
+
   console.log(`\n=== Results: ${passed} passed, ${failed} failed ===\n`);
 
   if (failed > 0) {
