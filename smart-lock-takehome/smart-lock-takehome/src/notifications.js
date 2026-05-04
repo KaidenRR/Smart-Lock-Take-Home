@@ -47,28 +47,27 @@ const sendNotification = async (unit, template, parameters) => {
         log.info(unit.id, "Notifications disabled for unit — skipping", { template });
         return;
     }
-  const channel = unit.notifications?.channel || "default";
-  const topic = `${MQTT_PREFIX}/${unit.id}/message/${channel}/send`;
-  const recipients = (unit.residents || [])
-    .filter((resident) => shouldDeliverToResident(resident, parameters.severity))
-    .map((resident) => ({
-      name: resident.name,
-      email: resident.email,
-      phone: resident.phone,
-      preferences: resident.preferences,
-    }));
+    const channel = unit.notifications?.channel || "default";
+    const qualifiedResidents = (unit.residents || [])
+        .filter(r => shouldDeliverToResident(r, parameters.severity));
 
-  await iotClient.send(
-    new PublishCommand({
-      topic,
-      payload: JSON.stringify({
-        template,
-        parameters,
-        recipients,
-      }),
-      qos: 1,
-    })
-  );
+    await Promise.all(qualifiedResidents.map(resident => {
+        const topic = `${MQTT_PREFIX}/${unit.id}/message/${channel}/send`;
+        return iotClient.send(new PublishCommand({
+            topic,
+            payload: JSON.stringify({
+                template,
+                parameters: { ...parameters, resident_name: resident.name },
+                recipients: [{
+                    name: resident.name,
+                    email: resident.email,
+                    phone: resident.phone,
+                    preferences: resident.preferences,
+                }],
+            }),
+            qos: 1,
+        }));
+    }));
 
   log.info(unit.id, `Notification sent: ${template}`, { topic });
 };

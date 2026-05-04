@@ -1,10 +1,10 @@
 const log = require("./logger");
 
-const TOPIC_REGEX = /^v\/([a-z0-9-]+)\/[a-f0-9-]{36}\/lock\/[a-z_]+$/;
+// // For UUID unit ID
+// const TOPIC_REGEX = /^v\/([a-z0-9-]+)\/[a-f0-9-]{36}\/lock\/[a-z_]+$/;
 
-// Replacement to the UUID-specific unit ID pattern with one that matches any non-slash argument:
-//
-// const TOPIC_REGEX = /^v\/([a-z0-9-]+)\/[^/]+\/lock\/[a-z_]+$/;
+// For non-UUID unit ID
+const TOPIC_REGEX = /^v\/([a-z0-9-]+)\/[^/]+\/lock\/[a-z_]+$/;
 
 const extractTenant = (topic) => {
   const match = TOPIC_REGEX.exec(topic);

@@ -475,6 +475,185 @@ const runTests = async () => {
         assert(false, "INC-2406 stale battery telemetry", error.message);
     }
 
+    console.log("\nScenario 12 (INC-2407): each resident receives a publish addressed only to them");
+    reset();
+    try {
+        // Unit 301 has two qualifying residents: Jane Doe and John Doe.
+        // A jammed event triggers a notification (notify: true in state-map).
+        // The bug: sendNotification issues ONE publish whose recipients array contains
+        // both residents. The downstream dispatcher then has to pick a name — and
+        // whichever it picks, the other resident sees the wrong name in their alert.
+        //
+        // The correct fix: one publish per recipient, each payload's recipients array
+        // containing exactly that one person.  The test is written against that
+        // contract, so it will fail on the current code and pass after the fix.
+        await handler(makeEvent({
+            topic: `v/${TENANT}/${UNIT}/lock/jammed`,
+            state: "jammed",
+            sensor_id: "front_door_lock",
+        }));
+
+        // Both residents opted in (email/sms/push all set), so we expect two publishes.
+        assert(
+            publishedMessages.length === 2,
+            "One publish per qualifying resident (not one publish for all)",
+            `Got ${publishedMessages.length} publish(es)`
+        );
+
+        // Every publish must have exactly one entry in its recipients array.
+        // A multi-recipient payload is the root cause of the name-leak.
+        for (const msg of publishedMessages) {
+            assert(
+                msg.payload.recipients.length === 1,
+                `Publish to '${msg.payload.recipients[0]?.name ?? "?"}' carries exactly one recipient`,
+                `Got ${msg.payload.recipients.length} recipient(s) in payload`
+            );
+        }
+
+        // Each resident must appear in exactly one publish — no resident is missing,
+        // and no resident bleeds into another resident's payload.
+        const names = publishedMessages.map((m) => m.payload.recipients[0]?.name);
+        assert(
+            names.includes("Jane Doe"),
+            "Jane Doe appears in exactly one publish",
+            `Recipients across publishes: ${JSON.stringify(names)}`
+        );
+        assert(
+            names.includes("John Doe"),
+            "John Doe appears in exactly one publish",
+            `Recipients across publishes: ${JSON.stringify(names)}`
+        );
+        assert(
+            new Set(names).size === names.length,
+            "No resident name appears in more than one publish",
+            `Duplicates found: ${JSON.stringify(names)}`
+        );
+
+        // The template and shared parameters must still be present in every publish
+        // so each recipient gets the full notification context.
+        for (const msg of publishedMessages) {
+            assert(
+                msg.payload.template === "lock_jammed_notify",
+                `Publish to '${msg.payload.recipients[0]?.name ?? "?"}' carries the correct template`,
+                `Got '${msg.payload.template}'`
+            );
+            assert(
+                typeof msg.payload.parameters?.lock_name === "string",
+                `Publish to '${msg.payload.recipients[0]?.name ?? "?"}' carries lock_name parameter`,
+                `Got ${JSON.stringify(msg.payload.parameters)}`
+            );
+        }
+    } catch (error) {
+        assert(false, "INC-2407 cross-resident notification isolation", error.message);
+    }
+
+    console.log("\nScenario 13 (INC-2407 staging spike): buildRecipients dead-code divergence");
+    reset();
+    try {
+        // What the staging triage observed:
+        //   helper=buildRecipients severity=warn resident_count=2 result=[]
+        //
+        // buildRecipients is exported but never called by sendNotification — the
+        // production path uses shouldDeliverToResident inline instead.  The two
+        // functions are logically identical today, but they live separately and can
+        // drift.  The staging spike was a false lead precisely because the triage
+        // team tested the dead helper rather than the live path.
+        //
+        // This scenario pins three things:
+        //   A. The live path (sendNotification) does produce recipients for the
+        //      residents that triggered the spike — so the empty-list result cannot
+        //      come from production code.
+        //   B. buildRecipients and shouldDeliverToResident agree on every
+        //      severity × preference combination in the unit table, so any future
+        //      wiring of buildRecipients into the production path won't silently
+        //      change behaviour.
+        //   C. A resident with no preferences at all is handled consistently by
+        //      both functions — the edge case that most likely produced the empty
+        //      list in staging.
+
+        const { buildRecipients } = require(path.resolve(__dirname, "..", "src", "notifications.js"));
+
+        // Part A — live path produces recipients for unit 301 residents at severity=warn.
+        // Jane: { email: true, sms: true,  push: false } → qualifies
+        // John: { email: true, sms: false, push: true  } → qualifies
+        await handler(makeEvent({
+            topic: `v/${TENANT}/${UNIT}/lock/jammed`,
+            state: "jammed",
+            sensor_id: "front_door_lock",
+        }));
+        // After the Scenario 13 fix there will be one publish per resident;
+        // before that fix there is one publish with two recipients.
+        // Either way, at least one publish must exist — an empty recipient list
+        // would mean zero publishes, reproducing the staging spike on prod data.
+        assert(
+            publishedMessages.length > 0,
+            "sendNotification (live path) produces at least one publish for unit 301 at severity=warn",
+            `Got ${publishedMessages.length} publish(es) — live path is dropping all recipients`
+        );
+        const allRecipientNames = publishedMessages.flatMap((m) => m.payload.recipients.map((r) => r.name));
+        assert(
+            allRecipientNames.includes("Jane Doe"),
+            "Jane Doe is delivered to by the live path",
+            `Recipients across all publishes: ${JSON.stringify(allRecipientNames)}`
+        );
+        assert(
+            allRecipientNames.includes("John Doe"),
+            "John Doe is delivered to by the live path",
+            `Recipients across all publishes: ${JSON.stringify(allRecipientNames)}`
+        );
+
+        // Part B — buildRecipients must agree with shouldDeliverToResident for every
+        // resident in the unit table across both severity levels.
+        // If they diverge, wiring buildRecipients in will silently change who gets notified.
+        const severities = ["warn", "alert", "info"];
+        for (const [unitId, unitData] of Object.entries(unitTable)) {
+            for (const severity of severities) {
+                const fromHelper = await buildRecipients(unitData.residents, severity);
+                const fromLive = unitData.residents.filter((r) => {
+                    if (severity === "alert") return Boolean(r.email || r.phone);
+                    const p = r.preferences || {};
+                    return Boolean(p.email || p.sms || p.push);
+                });
+
+                assert(
+                    fromHelper.length === fromLive.length,
+                    `buildRecipients and shouldDeliverToResident agree on count for unit '${unitData.name}' at severity=${severity}`,
+                    `buildRecipients=${fromHelper.length}, shouldDeliverToResident=${fromLive.length} — functions have diverged`
+                );
+
+                const helperNames = fromHelper.map((r) => r.name).sort();
+                const liveNames = fromLive.map((r) => r.name).sort();
+                assert(
+                    JSON.stringify(helperNames) === JSON.stringify(liveNames),
+                    `buildRecipients and shouldDeliverToResident agree on which residents qualify for unit '${unitData.name}' at severity=${severity}`,
+                    `buildRecipients=[${helperNames}], shouldDeliverToResident=[${liveNames}]`
+                );
+            }
+        }
+
+        // Part C — resident with no preferences object at all.
+        // This is the most likely shape of the staging data that produced result=[].
+        // Both functions must handle it without throwing and must agree on the outcome.
+        const bareResident = { name: "No Prefs", email: "", phone: "" };
+        for (const severity of severities) {
+            const fromHelper = await buildRecipients([bareResident], severity);
+            const qualifies = severity === "alert"
+                ? Boolean(bareResident.email || bareResident.phone)
+                : Boolean((bareResident.preferences || {}).email ||
+                    (bareResident.preferences || {}).sms ||
+                    (bareResident.preferences || {}).push);
+            const fromLive = qualifies ? [bareResident] : [];
+
+            assert(
+                fromHelper.length === fromLive.length,
+                `Both functions agree on bare-preferences resident at severity=${severity} (expected ${fromLive.length})`,
+                `buildRecipients=${fromHelper.length}, shouldDeliverToResident=${fromLive.length}`
+            );
+        }
+    } catch (error) {
+        assert(false, "INC-2407 staging spike / buildRecipients divergence", error.message);
+    }
+
   console.log(`\n=== Results: ${passed} passed, ${failed} failed ===\n`);
 
   if (failed > 0) {
